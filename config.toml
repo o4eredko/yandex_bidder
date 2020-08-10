@@ -1,0 +1,13 @@
+[api]
+host = "localhost"
+port = 8000
+secret_key = "${SECRET_KEY}"
+
+[cache]
+host="${CACHE_HOST|localhost}"
+port="${CACHE_PORT|6379}"
+username="${CACHE_USERNAME}"
+password="${CACHE_PASSWORD}"
+
+[logger]
+level = "debug"

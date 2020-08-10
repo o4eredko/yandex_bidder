@@ -1,0 +1,32 @@
+version: "3.7"
+
+networks:
+  yandex_bidder:
+    name: yandex_bidder
+    driver: bridge
+
+services:
+  yandex_bidder_app:
+    container_name: yandex_bidder_app
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    networks:
+      - yandex_bidder
+    ports:
+      - 8000:8000
+    depends_on:
+      - yandex_bidder_cache
+
+  yandex_bidder_cache:
+    container_name: yandex_bidder_cache
+    image: redis:6.0.6
+    networks:
+      - yandex_bidder
+    volumes:
+      - ./.data/redis:/data
+    ports:
+      - 6379:6379
