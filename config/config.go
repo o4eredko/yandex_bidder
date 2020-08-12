@@ -10,8 +10,7 @@ type (
 	Config struct {
 		Api      apiConfig
 		Database databaseConfig `config:"database"`
-		// Cache    cacheConfig
-		Logger loggerConfig
+		Logger   loggerConfig
 	}
 
 	apiConfig struct {
@@ -26,13 +25,6 @@ type (
 		Password string
 		DB       string `config:"database"`
 	}
-
-	// cacheConfig struct {
-	// 	Host     string
-	// 	Port     int
-	// 	Username string
-	// 	Password string
-	// }
 
 	loggerConfig struct {
 		Level  string

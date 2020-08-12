@@ -30,9 +30,9 @@ type (
 	Group struct {
 		ID       int        `json:"id"`
 		Name     string     `json:"name"`
-		Strategy *Strategy  `json:"strategy"`
-		Start    *time.Time `json:"start"`
-		Interval *int       `json:"interval"`
+		Strategy *string    `json:"strategy"`
+		Start    *time.Time `json:"start" db:"schedule_start"`
+		Interval *int       `json:"interval" db:"schedule_interval"`
 	}
 
 	Strategies struct {
