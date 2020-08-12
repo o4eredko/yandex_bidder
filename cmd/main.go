@@ -14,7 +14,10 @@ import (
 func main() {
 	c := config.NewConfig("config.toml")
 
-	app := app.New(c)
+	app, err := app.New(c)
+	if err != nil {
+		panic(err)
+	}
 
 	api := api.New(c, app)
 	// Start server

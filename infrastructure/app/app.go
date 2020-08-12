@@ -1,14 +1,16 @@
 package app
 
 import (
+	"github.com/rs/zerolog/log"
+
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/cache"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/log"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/logger"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
 )
 
 type (
 	shutdowner interface {
-		Shutdown()
+		Shutdown() error
 	}
 
 	App struct {
@@ -17,15 +19,16 @@ type (
 	}
 )
 
-func New(config *config.Config) *App {
-	log.ConfigureLogger(config.Logger.Level)
+func New(config *config.Config) (*App, error) {
+	logger.ConfigureLogger(config.Logger.Level)
 
 	app := &App{config: config}
 	defer app.shutdownOnPanic()
-	cacheStore := cache.New(config.Cache.URL())
-	app.AddCleanupTask(cacheStore)
 
-	return app
+	sqlStore := sql.New(config.Database.DSN())
+	app.AddCleanupTask(sqlStore)
+
+	return app, nil
 }
 
 func (a *App) AddCleanupTask(s shutdowner) {
@@ -36,7 +39,9 @@ func (a *App) Shutdown() {
 	lastIndex := len(a.cleanupTasks) - 1
 
 	for i := range a.cleanupTasks {
-		a.cleanupTasks[lastIndex-i].Shutdown()
+		if err := a.cleanupTasks[lastIndex-i].Shutdown(); err != nil {
+			log.Error().Err(err)
+		}
 	}
 }
 

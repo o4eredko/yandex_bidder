@@ -3,11 +3,12 @@ host = "localhost"
 port = 8000
 secret_key = "${SECRET_KEY}"
 
-[cache]
-host="${CACHE_HOST|localhost}"
-port="${CACHE_PORT|6379}"
-username="${CACHE_USERNAME}"
-password="${CACHE_PASSWORD}"
+[database]
+host = "${DB_HOST|localhost}"
+port = "${DB_PORT|1433}"
+username = "${DB_USER}"
+password = "${DB_PASSWORD}"
+database = "${DB_DATABASE|Yandex}"
 
 [logger]
 level = "debug"
