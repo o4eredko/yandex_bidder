@@ -12,6 +12,16 @@ type (
 		ScheduleInterval int        `json:"interval"`
 		StrategyName     string     `json:"strategy"`
 	}
+
+	Bid struct {
+		CampaignId int
+		Bid        int
+	}
+
+	BidsOut struct {
+		Bids       []*Bid
+		MaxRetries int `json:"max_retries"`
+	}
 )
 
 func (g *GroupUpdateIn) Validate() error {

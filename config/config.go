@@ -9,7 +9,8 @@ import (
 type (
 	Config struct {
 		Api      apiConfig
-		Database databaseConfig `config:"database"`
+		Database databaseConfig
+		AMQP     amqpConfig
 		Logger   loggerConfig
 	}
 
@@ -26,6 +27,13 @@ type (
 		DB       string `config:"database"`
 	}
 
+	amqpConfig struct {
+		Host     string
+		Port     int
+		Username string
+		Password string
+	}
+
 	loggerConfig struct {
 		Level  string
 		Format string
@@ -39,6 +47,10 @@ func (c *apiConfig) Addr() string {
 func (c *databaseConfig) DSN() string {
 	return fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
 		c.Host, c.Username, c.Password, c.Port, c.DB)
+}
+
+func (c *amqpConfig) DSN() string {
+	return fmt.Sprintf("amqp://%s:%s@%s:%d/", c.Username, c.Password, c.Host, c.Port)
 }
 
 func NewConfig(configPath string) *Config {

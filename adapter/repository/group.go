@@ -75,3 +75,27 @@ func (r *groupRepo) Update(group *domain.GroupUpdateIn) error {
 
 	return nil
 }
+
+func (r *groupRepo) GetStats(groupId int) ([]*domain.Stats, error) {
+	stats := make([]*domain.Stats, 0)
+	query := r.db.NewQuery(`
+		select acc.name as account_name, c.id as campaign_id, stats.impressions, stats.clicks, stats.cost
+		from accounts acc
+		         inner join campaigns c on acc.id = c.account_id
+		         inner join stats s on s.campaign_id = c.id
+		where acc.group_id = {:id}
+	`).Bind(dbx.Params{"id": groupId})
+	rows, err := query.Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var row *domain.Stats
+		if err := rows.ScanStruct(&row); err != nil {
+			return nil, err
+		}
+		stats = append(stats, row)
+	}
+	return stats, nil
+}

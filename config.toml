@@ -10,5 +10,11 @@ username = "${DB_USER}"
 password = "${DB_PASSWORD}"
 database = "${DB_DATABASE|Yandex}"
 
+[amqp]
+host = "${AMQP_HOST|localhost}"
+port = "${AMQP_PORT|5672}"
+username = "${AMQP_USERNAME}"
+password = "${AMQP_PASSWORD}"
+
 [logger]
 level = "debug"

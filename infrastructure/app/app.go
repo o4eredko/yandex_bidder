@@ -6,6 +6,7 @@ import (
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/logger"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/amqp"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
@@ -19,6 +20,7 @@ type (
 		config       *config.Config
 		cleanupTasks []shutdowner
 		GroupUseCase usecase.GroupUseCase
+		BidUseCase   usecase.BidUseCase
 	}
 )
 
@@ -30,9 +32,15 @@ func New(config *config.Config) (*App, error) {
 
 	sqlStore := sql.New(config.Database.DSN())
 	app.AddCleanupTask(sqlStore)
+	amqpStore := amqp.New(config.AMQP.DSN())
+	app.AddCleanupTask(sqlStore)
 
-	groupRepo := repository.NewGroupRepository(sqlStore)
+	groupRepo := repository.NewGroupRepo(sqlStore.DB)
+	strategyRepo := repository.NewStrategyRepo()
+	bidRepo := repository.NewBidRepo(amqpStore)
+
 	app.GroupUseCase = usecase.NewGroupUseCase(groupRepo)
+	app.BidUseCase = usecase.NewBidUseCase(groupRepo, strategyRepo, bidRepo)
 
 	return app, nil
 }
