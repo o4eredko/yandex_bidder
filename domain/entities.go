@@ -23,14 +23,16 @@ type (
 	BidHandler func(int, int, int) (int, error)
 
 	Strategy struct {
-		Name     string
-		Schedule Schedule
-		Handler  BidHandler
+		Name    string
+		Handler BidHandler
 	}
 
 	Group struct {
-		Name     string
-		Strategy Strategy
+		ID       int        `json:"id"`
+		Name     string     `json:"name"`
+		Strategy *Strategy  `json:"strategy"`
+		Start    *time.Time `json:"start"`
+		Interval *int       `json:"interval"`
 	}
 
 	Strategies struct {
