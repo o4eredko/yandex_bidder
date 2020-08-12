@@ -4,19 +4,25 @@ import (
 	"github.com/kataras/iris/v12"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
-type Handler struct{}
+type Handler struct {
+	groupUseCase usecase.GroupUseCase
+}
 
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(groupUseCase usecase.GroupUseCase) *Handler {
+	return &Handler{
+		groupUseCase: groupUseCase,
+	}
 }
 
 func (h *Handler) Ping(c iris.Context) {
 	c.JSON(iris.Map{"pong": true})
 }
 
-func (h *Handler) GetGroups() {
+func (h *Handler) GetGroups() ([]*domain.Group, error) {
+	return h.groupUseCase.GetAll()
 }
 
 func (h *Handler) UpdateGroup(id int) (*domain.Group, error) {

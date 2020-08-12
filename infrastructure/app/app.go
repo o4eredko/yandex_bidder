@@ -3,9 +3,11 @@ package app
 import (
 	"github.com/rs/zerolog/log"
 
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/logger"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
 type (
@@ -16,6 +18,7 @@ type (
 	App struct {
 		config       *config.Config
 		cleanupTasks []shutdowner
+		GroupUseCase usecase.GroupUseCase
 	}
 )
 
@@ -27,6 +30,9 @@ func New(config *config.Config) (*App, error) {
 
 	sqlStore := sql.New(config.Database.DSN())
 	app.AddCleanupTask(sqlStore)
+
+	groupRepo := repository.NewGroupRepository(sqlStore)
+	app.GroupUseCase = usecase.NewGroupUseCase(groupRepo)
 
 	return app, nil
 }

@@ -44,17 +44,17 @@ func New(config *config.Config, app *app.App) Api {
 	i := iris.New()
 
 	loggerConfig := logger.Config{
-		Status:             true,
-		Method:             true,
-		Path:               true,
-		Query:              true,
-		LogFuncCtx:         AccessLogHandler,
+		Status:     true,
+		Method:     true,
+		Path:       true,
+		Query:      true,
+		LogFuncCtx: AccessLogHandler,
 	}
 	i.Use(logger.New(loggerConfig))
 	setupMiddlewares(i)
 
-	hander := NewHandler()
-	hander.Register(i)
+	handler := NewHandler(app.GroupUseCase)
+	handler.Register(i)
 
 	return &api{
 		config: config,
