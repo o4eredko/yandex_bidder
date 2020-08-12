@@ -1,6 +1,7 @@
 package repository
 
 import (
+	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/rs/zerolog/log"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
@@ -8,25 +9,23 @@ import (
 )
 
 type (
-	groupRepository struct {
+	groupRepo struct {
 		store *sql.Store
-	}
-
-	GroupRepository interface {
 	}
 )
 
-func NewGroupRepository(s *sql.Store) GroupRepository {
-	return &groupRepository{
+func NewGroupRepository(s *sql.Store) usecase.GroupRepo {
+	return &groupRepo{
 		store: s,
 	}
 }
 
-func (r *groupRepository) GetAll() []*domain.Group {
-	sql := "SELECT id, name, schedule_start, schedule_interval, strategy FROM groups"
+func (r *groupRepo) GetAll() []*domain.Group {
 	var groups []*domain.Group
+	query := r.store.DB.
+		Select("id, name, schedule_start, schedule_interval, strategy").
+		From("groups")
 
-	query := r.store.DB.NewQuery(sql)
 	if err := query.All(groups); err != nil {
 		log.Error().Err(err)
 	}
