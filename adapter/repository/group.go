@@ -1,11 +1,9 @@
 package repository
 
 import (
-	dbx "github.com/go-ozzo/ozzo-dbx"
-	"github.com/rs/zerolog/log"
-
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
 type (
@@ -20,15 +18,23 @@ func NewGroupRepository(s *sql.Store) usecase.GroupRepo {
 	}
 }
 
-func (r *groupRepo) GetAll() []*domain.Group {
-	var groups []*domain.Group
-	query := r.store.DB.
-		Select("id, name, schedule_start, schedule_interval, strategy").
-		From("groups")
-
-	if err := query.All(groups); err != nil {
-		log.Error().Err(err)
+func (r *groupRepo) GetAll() ([]*domain.Group, error) {
+	groups := make([]*domain.Group, 0)
+	rows, err := r.store.DB.
+		Select("id", "name", "schedule_start", "schedule_interval", "strategy").
+		From("groups").
+		Rows()
+	if err != nil {
+		return nil, err
 	}
 
-	return groups
+	for rows.Next() {
+		var group *domain.Group
+		if err := rows.ScanStruct(&group); err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
+	}
+
+	return groups, nil
 }

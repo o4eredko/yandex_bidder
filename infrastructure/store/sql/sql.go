@@ -12,7 +12,7 @@ type (
 )
 
 func New(connString string) *Store {
-	db, err := dbx.Open("sqlserver", connString)
+	db, err := dbx.MustOpen("sqlserver", connString)
 	if err != nil {
 		panic(err)
 	}
