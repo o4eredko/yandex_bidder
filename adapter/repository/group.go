@@ -21,6 +21,28 @@ func NewGroupRepo(db dbx.Builder) usecase.GroupRepo {
 	}
 }
 
+func (r *groupRepo) Accounts(group *domain.Group) ([]*domain.Account, error) {
+	accounts := make([]*domain.Account, 0)
+	rows, err := r.db.
+		Select("id", "name").
+		From("accounts AS a").
+		Where(dbx.HashExp{"group_id": group.ID}).
+		Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		account := new(domain.Account)
+		if err := rows.ScanStruct(account); err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, account)
+	}
+
+	return accounts, nil
+}
+
 func (r *groupRepo) GetAll() ([]*domain.Group, error) {
 	groups := make([]*domain.Group, 0)
 	rows, err := r.db.
@@ -44,9 +66,11 @@ func (r *groupRepo) GetAll() ([]*domain.Group, error) {
 
 func (r *groupRepo) GetByID(id int) (*domain.Group, error) {
 	group := new(domain.Group)
-	query := r.db.Select("id", "name", "schedule_start", "schedule_interval", "strategy").
-		From("groups").
-		Where(dbx.NewExp("id", dbx.Params{"id": id}))
+	query := r.db.
+		Select("g.id", "g.name", "schedule_start", "schedule_interval", "s.name AS strategy").
+		From("groups AS g").
+		LeftJoin("strategies AS s", dbx.NewExp("g.strategy_id = s.id")).
+		Where(dbx.HashExp{"g.id": id})
 
 	if err := query.One(group); err != nil {
 		if err == sql.ErrNoRows {
@@ -58,44 +82,18 @@ func (r *groupRepo) GetByID(id int) (*domain.Group, error) {
 	return group, nil
 }
 
-func (r *groupRepo) Update(group *domain.GroupUpdateIn) error {
-	// params := dbx.Params{
-	// 	"schedule_start":    group.Start,
-	// 	"schedule_interval": group.Interval,
-	// 	"strategy":          group.Strategy,
-	// }
-	// where := dbx.NewExp("id = {:id}", dbx.Params{"id": group.ID})
-	//
-	// query := r.store.DB.Update("groups", params, where)
-	// if _, err := query.Execute(); err != nil {
-	// 	return err
-	// }
+func (r *groupRepo) Update(group *domain.Group) error {
+	fieldsToUpdate := dbx.Params{
+		"schedule_start":    group.Start,
+		"schedule_interval": group.Interval,
+		"strategy":          group.Strategy,
+	}
+	whereClause := dbx.HashExp{"id": group.ID}
 
-	// return r.store.DB.Model(group).Exclude("name").Update()
+	query := r.db.Update("groups", fieldsToUpdate, whereClause)
+	if _, err := query.Execute(); err != nil {
+		return err
+	}
 
 	return nil
-}
-
-func (r *groupRepo) GetStats(groupId int) ([]*domain.Stats, error) {
-	stats := make([]*domain.Stats, 0)
-	query := r.db.NewQuery(`
-		select acc.name as account_name, c.id as campaign_id, stats.impressions, stats.clicks, stats.cost
-		from accounts acc
-		         inner join campaigns c on acc.id = c.account_id
-		         inner join stats s on s.campaign_id = c.id
-		where acc.group_id = {:id}
-	`).Bind(dbx.Params{"id": groupId})
-	rows, err := query.Rows()
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		var row *domain.Stats
-		if err := rows.ScanStruct(&row); err != nil {
-			return nil, err
-		}
-		stats = append(stats, row)
-	}
-	return stats, nil
 }

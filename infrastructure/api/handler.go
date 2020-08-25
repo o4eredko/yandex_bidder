@@ -8,12 +8,20 @@ import (
 )
 
 type Handler struct {
-	groupUseCase usecase.GroupUseCase
+	groupUseCase    usecase.GroupUseCase
+	strategyUseCase usecase.StrategyUseCase
+	bidUseCase      usecase.BidUseCase
 }
 
-func NewHandler(groupUseCase usecase.GroupUseCase) *Handler {
+func NewHandler(
+	groupUseCase usecase.GroupUseCase,
+	strategyUseCase usecase.StrategyUseCase,
+	bidUseCase usecase.BidUseCase,
+) *Handler {
 	return &Handler{
-		groupUseCase: groupUseCase,
+		groupUseCase:    groupUseCase,
+		strategyUseCase: strategyUseCase,
+		bidUseCase:      bidUseCase,
 	}
 }
 
@@ -25,10 +33,19 @@ func (h *Handler) GetGroups() ([]*domain.Group, error) {
 	return h.groupUseCase.GetAll()
 }
 
-func (h *Handler) UpdateGroup(id int) (*domain.Group, error) {
-	return nil, nil
+func (h *Handler) UpdateGroup(id int, input *domain.GroupUpdateIn) (*domain.Group, error) {
+	group, err := h.groupUseCase.Update(id, input)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
 }
 
-func (h *Handler) ChangeBid(id int) {
+func (h *Handler) ChangeBid(id int) error {
+	return h.bidUseCase.FixBids(id)
+}
 
+func (h *Handler) GetStrategies() ([]*domain.Strategy, error) {
+	return h.strategyUseCase.GetStrategies()
 }

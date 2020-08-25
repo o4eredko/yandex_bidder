@@ -2,16 +2,16 @@ package amqp
 
 import (
 	"github.com/streadway/amqp"
-
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository"
 )
 
-type store struct {
-	connection *amqp.Connection
-	channel    *amqp.Channel
-}
+type (
+	Store struct {
+		connection *amqp.Connection
+		Channel    *amqp.Channel
+	}
+)
 
-func New(connString string) repository.AMQPStore {
+func New(connString string) *Store {
 	connection, err := amqp.Dial(connString)
 	if err != nil {
 		panic(err)
@@ -23,19 +23,14 @@ func New(connString string) repository.AMQPStore {
 
 	_, err = channel.QueueDeclare("change_bid", false, false, false, false, nil)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	return &store{connection, channel}
+	return &Store{
+		connection: connection,
+		Channel:    channel,
+	}
 }
 
-func (s *store) Publish(msg string) error {
-	//msg := amqp.Publishing{
-	//
-	//}
-	//return s.channel.Publish("", "change_bid", false, false, msg)
-	return nil
-}
-
-func (s *store) Shutdown() error {
+func (s *Store) Shutdown() error {
 	return s.connection.Close()
 }

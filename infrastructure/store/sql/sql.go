@@ -12,7 +12,7 @@ type (
 )
 
 func New(connString string) *Store {
-	db, err := dbx.MustOpen("sqlserver", connString)
+	db, err := dbx.MustOpen("mssql", connString)
 	if err != nil {
 		panic(err)
 	}
@@ -21,9 +21,5 @@ func New(connString string) *Store {
 }
 
 func (s *Store) Shutdown() error {
-	if err := s.DB.Close(); err != nil {
-		return err
-	}
-
-	return nil
+	return s.DB.Close()
 }

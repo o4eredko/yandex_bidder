@@ -6,20 +6,17 @@ import (
 
 type (
 	Campaign struct {
-		ID    int
-		Stats Stats
+		ID int
 	}
 
-	Schedule struct {
-		Start    time.Time
-		Interval int
+	Account struct {
+		ID   int
+		Name string
 	}
-
-	BidHandler func(int, int, int) int
 
 	Strategy struct {
-		Name    string
-		Handler BidHandler
+		ID   int    `json:"id"`
+		Name string `json:"name"`
 	}
 
 	Group struct {
@@ -30,15 +27,12 @@ type (
 		Interval *int       `json:"interval" db:"schedule_interval"`
 	}
 
-	Strategies struct {
-		strategies map[string]BidHandler
-	}
-
-	Stats struct {
-		AccountName string `db:"account_name"`
-		CampaignId  int    `db:"campaign_id"`
-		Impressions int
-		Cost        int
-		Clicks      int
+	Bid struct {
+		CampaignID int
+		Bid        int
 	}
 )
+
+func (g *Group) CalculateMaxRetries() int {
+	return *g.Interval / 2
+}

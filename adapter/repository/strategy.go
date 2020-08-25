@@ -1,32 +1,39 @@
 package repository
 
 import (
-	"errors"
+	dbx "github.com/go-ozzo/ozzo-dbx"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
 type strategyRepo struct {
-	handlers map[string]domain.BidHandler
+	db dbx.Builder
 }
 
-func NewStrategyRepo() usecase.StrategyRepo {
+func NewStrategyRepo(db dbx.Builder) usecase.StrategyRepo {
 	return &strategyRepo{
-		handlers: map[string]domain.BidHandler{
-			"default": defaultHandler,
-		},
+		db: db,
 	}
 }
 
-func (r *strategyRepo) Get(key string) (domain.BidHandler, error) {
-	handler, ok := r.handlers[key]
-	if !ok {
-		return nil, errors.New("handler not found")
+func (r *strategyRepo) GetAll() ([]*domain.Strategy, error) {
+	rows, err := r.db.
+		Select("id", "name").
+		From("strategies").
+		Rows()
+	if err != nil {
+		return nil, err
 	}
-	return handler, nil
-}
 
-func defaultHandler(a, b, c int) int {
-	return 228
+	strategies := make([]*domain.Strategy, 0)
+	for rows.Next() {
+		strategy := new(domain.Strategy)
+		if err := rows.ScanStruct(strategy); err != nil {
+			return nil, err
+		}
+		strategies = append(strategies, strategy)
+	}
+
+	return strategies, nil
 }

@@ -17,10 +17,11 @@ type (
 	}
 
 	App struct {
-		config       *config.Config
-		cleanupTasks []shutdowner
-		GroupUseCase usecase.GroupUseCase
-		BidUseCase   usecase.BidUseCase
+		config          *config.Config
+		cleanupTasks    []shutdowner
+		GroupUseCase    usecase.GroupUseCase
+		BidUseCase      usecase.BidUseCase
+		StrategyUseCase usecase.StrategyUseCase
 	}
 )
 
@@ -36,11 +37,13 @@ func New(config *config.Config) (*App, error) {
 	app.AddCleanupTask(sqlStore)
 
 	groupRepo := repository.NewGroupRepo(sqlStore.DB)
-	strategyRepo := repository.NewStrategyRepo()
-	bidRepo := repository.NewBidRepo(amqpStore)
+	accountRepo := repository.NewAccountRepo(sqlStore.DB)
+	strategyRepo := repository.NewStrategyRepo(sqlStore.DB)
+	bidRepo := repository.NewBidRepo(sqlStore.DB, amqpStore)
 
+	app.StrategyUseCase = usecase.NewStrategyUseCase(strategyRepo)
 	app.GroupUseCase = usecase.NewGroupUseCase(groupRepo)
-	app.BidUseCase = usecase.NewBidUseCase(groupRepo, strategyRepo, bidRepo)
+	app.BidUseCase = usecase.NewBidUseCase(groupRepo, accountRepo, bidRepo)
 
 	return app, nil
 }

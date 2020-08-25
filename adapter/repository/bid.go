@@ -1,40 +1,55 @@
 package repository
 
 import (
+	"fmt"
+
+	dbx "github.com/go-ozzo/ozzo-dbx"
+
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+	amqpstore "gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/amqp"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
 type (
 	bidRepo struct {
-		amqpStore AMQPStore
-	}
-
-	AMQPStore interface {
+		db        dbx.Builder
+		amqpStore amqpstore.Store
 	}
 )
 
-func NewBidRepo(amqpStore AMQPStore) usecase.BidRepo {
-	return &bidRepo{amqpStore: amqpStore}
+func NewBidRepo(db dbx.Builder, amqpStore amqpstore.Store) usecase.BidRepo {
+	return &bidRepo{
+		db:        db,
+		amqpStore: amqpStore,
+	}
 }
 
-func (b bidRepo) Update(stats []*domain.Stats, strategy domain.BidHandler, maxRetries int) error {
-	result := make(map[string]*domain.BidsOut)
-	for _, item := range stats {
-		newBid := &domain.Bid{
-			Bid:        strategy(item.Clicks, item.Cost, item.Impressions),
-			CampaignId: item.CampaignId,
-		}
+func (r *bidRepo) Calculate(strategy string, campaigns []*domain.Campaign) ([]*domain.Bid, error) {
+	query := r.db.NewQuery(fmt.Sprintf("SELECT dbo.%s({:campaign_id}) AS bid", strategy))
+	query.Prepare()
+	defer query.Close()
 
-		value, exists := result[item.AccountName]
-		if !exists {
-			result[item.AccountName] = &domain.BidsOut{
-				Bids:       make([]*domain.Bid, 0),
-				MaxRetries: maxRetries,
-			}
-			value = result[item.AccountName]
+	bids := make([]*domain.Bid, 0, len(campaigns))
+
+	for _, campaign := range campaigns {
+		bid := new(domain.Bid)
+		query.Bind(dbx.Params{"campaign_id": campaign.ID})
+		if err := query.One(bid); err != nil {
+			return nil, err
 		}
-		value.Bids = append(value.Bids, newBid)
+		bid.CampaignID = campaign.ID
+		bids = append(bids, bid)
 	}
+
+	return bids, nil
+}
+
+func (r *bidRepo) Update(bids *domain.BidsOut) error {
+	// fmt.Printf("Account: %s, MaxRetiries: %d\n", bids.AccountName, bids.MaxRetries)
+	// for i, bid := range bids.Bids {
+	// 	fmt.Printf("\t#%d => id: %d, bid: %d\n", i, bid.CampaignID, bid.Bid)
+	// }
+	r.amqpStore.Channel.Publish("", "change_bid", false, false, msg)
+
 	return nil
 }

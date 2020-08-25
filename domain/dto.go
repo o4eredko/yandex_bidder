@@ -13,14 +13,15 @@ type (
 		StrategyName     string     `json:"strategy"`
 	}
 
-	Bid struct {
-		CampaignId int
-		Bid        int
+	AccountWithCampaigns struct {
+		*Account
+		Campaigns []*Campaign
 	}
 
 	BidsOut struct {
-		Bids       []*Bid
-		MaxRetries int `json:"max_retries"`
+		AccountName string `json:"account_name"`
+		Bids        []*Bid
+		MaxRetries  int `json:"max_retries"`
 	}
 )
 
@@ -30,8 +31,7 @@ func (g *GroupUpdateIn) Validate() error {
 		validation.Field(
 			&g.ScheduleStart,
 			validation.Required,
-			validation.Date("1970-12-31T01:23:45Z"),
-			validation.Min(time.Now()),
+			validation.Min(time.Now().UTC()),
 		),
 		validation.Field(
 			&g.ScheduleInterval,
