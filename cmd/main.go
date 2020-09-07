@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	c := config.NewConfig("config.toml")
+	c := config.NewConfig("config.yml")
 
 	app, err := app.New(c)
 	if err != nil {

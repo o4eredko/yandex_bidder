@@ -1,0 +1,24 @@
+api:
+  host: "0.0.0.0"
+  port: 8000
+  secret_key: "${SECRET_KEY}"
+
+scheduler:
+  time_zone: "UTC"
+  suppress_errors_on_startup: true
+
+database:
+  host: "${DB_HOST|localhost}"
+  port: "${DB_PORT|1433}"
+  username: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+  database: "${DB_DATABASE|Yandex}"
+
+amqp:
+  host: "${AMQP_HOST|localhost}"
+  port: "${AMQP_PORT|5672}"
+  username: "${AMQP_USERNAME}"
+  password: "${AMQP_PASSWORD}"
+
+logger:
+  level: "debug"

@@ -8,18 +8,31 @@ import (
 
 type (
 	Config struct {
-		Api      apiConfig
-		Database databaseConfig
-		AMQP     amqpConfig
-		Logger   loggerConfig
+		Scheduler *Scheduler
+		Api       *Api
+		Database  *Database
+		AMQP      *AMQP
+		Logger    *Logger
 	}
 
-	apiConfig struct {
+	Interval struct {
+		Type string
+		Min  int
+		Max  int
+	}
+
+	Scheduler struct {
+		TimeZone                string `config:"time_zone"`
+		SuppressErrorsOnStartup bool   `config:"suppress_errors_on_startup"`
+		Interval                *Interval
+	}
+
+	Api struct {
 		Host string
 		Port int
 	}
 
-	databaseConfig struct {
+	Database struct {
 		Host     string
 		Port     int
 		Username string
@@ -27,29 +40,29 @@ type (
 		DB       string `config:"database"`
 	}
 
-	amqpConfig struct {
+	AMQP struct {
 		Host     string
 		Port     int
 		Username string
 		Password string
 	}
 
-	loggerConfig struct {
+	Logger struct {
 		Level  string
 		Format string
 	}
 )
 
-func (c *apiConfig) Addr() string {
+func (c *Api) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
-func (c *databaseConfig) DSN() string {
+func (c *Database) DSN() string {
 	return fmt.Sprintf("server=%s;user id=%s;password=%s;port=%d;database=%s;",
 		c.Host, c.Username, c.Password, c.Port, c.DB)
 }
 
-func (c *amqpConfig) DSN() string {
+func (c *AMQP) DSN() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%d/", c.Username, c.Password, c.Host, c.Port)
 }
 

@@ -1,25 +1,33 @@
 package usecase
 
-import "gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+import (
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
+)
 
 type (
 	GroupRepo interface {
-		GetAll() ([]*domain.Group, error)
-		GetByID(id int) (*domain.Group, error)
-		Accounts(group *domain.Group) ([]*domain.Account, error)
-		Update(group *domain.Group) error
+		GetAll() ([]*entities.Group, error)
+		GetByID(id int) (*entities.Group, error)
+		Accounts(group *entities.Group) ([]*entities.Account, error)
+		Update(group *entities.Group) error
 	}
 
 	AccountRepo interface {
-		Campaigns(account *domain.Account) ([]*domain.Campaign, error)
+		Bids(account *entities.Account, strategy string) ([]*entities.Bid, error)
 	}
 
 	StrategyRepo interface {
-		GetAll() ([]*domain.Strategy, error)
+		GetAll() ([]*entities.Strategy, error)
 	}
 
 	BidRepo interface {
-		Update(bids *domain.BidsOut) error
-		Calculate(strategy string, campaigns []*domain.Campaign) ([]*domain.Bid, error)
+		Update(bids *domain.GroupToUpdateBids) error
+	}
+
+	JobRepo interface {
+		Add(job *entities.Job) error
+		Remove(jobID int) error
+		Scheduled(jobID int) bool
 	}
 )

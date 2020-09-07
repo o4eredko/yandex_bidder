@@ -1,4 +1,4 @@
-package repository
+package group
 
 import (
 	"database/sql"
@@ -6,24 +6,26 @@ import (
 	dbx "github.com/go-ozzo/ozzo-dbx"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
+	sqlStore "gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
 )
 
 type (
-	groupRepo struct {
-		db dbx.Builder
+	repo struct {
+		store *sqlStore.Store
 	}
 )
 
-func NewGroupRepo(db dbx.Builder) usecase.GroupRepo {
-	return &groupRepo{
-		db: db,
+func New(store *sqlStore.Store) usecase.GroupRepo {
+	return &repo{
+		store: store,
 	}
 }
 
-func (r *groupRepo) Accounts(group *domain.Group) ([]*domain.Account, error) {
-	accounts := make([]*domain.Account, 0)
-	rows, err := r.db.
+func (r *repo) Accounts(group *entities.Group) ([]*entities.Account, error) {
+	accounts := make([]*entities.Account, 0)
+	rows, err := r.store.DB.
 		Select("id", "name").
 		From("accounts AS a").
 		Where(dbx.HashExp{"group_id": group.ID}).
@@ -33,7 +35,7 @@ func (r *groupRepo) Accounts(group *domain.Group) ([]*domain.Account, error) {
 	}
 
 	for rows.Next() {
-		account := new(domain.Account)
+		account := new(entities.Account)
 		if err := rows.ScanStruct(account); err != nil {
 			return nil, err
 		}
@@ -43,18 +45,19 @@ func (r *groupRepo) Accounts(group *domain.Group) ([]*domain.Account, error) {
 	return accounts, nil
 }
 
-func (r *groupRepo) GetAll() ([]*domain.Group, error) {
-	groups := make([]*domain.Group, 0)
-	rows, err := r.db.
-		Select("id", "name", "schedule_start", "schedule_interval", "strategy").
-		From("groups").
+func (r *repo) GetAll() ([]*entities.Group, error) {
+	groups := make([]*entities.Group, 0)
+	rows, err := r.store.DB.
+		Select("g.id", "g.name", "schedule_start", "schedule_interval", "s.name as strategy").
+		From("groups AS g").
+		LeftJoin("strategies AS s", dbx.NewExp("g.strategy_id = s.id")).
 		Rows()
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		var group *domain.Group
+		var group *entities.Group
 		if err := rows.ScanStruct(&group); err != nil {
 			return nil, err
 		}
@@ -64,9 +67,9 @@ func (r *groupRepo) GetAll() ([]*domain.Group, error) {
 	return groups, nil
 }
 
-func (r *groupRepo) GetByID(id int) (*domain.Group, error) {
-	group := new(domain.Group)
-	query := r.db.
+func (r *repo) GetByID(id int) (*entities.Group, error) {
+	group := new(entities.Group)
+	query := r.store.DB.
 		Select("g.id", "g.name", "schedule_start", "schedule_interval", "s.name AS strategy").
 		From("groups AS g").
 		LeftJoin("strategies AS s", dbx.NewExp("g.strategy_id = s.id")).
@@ -82,7 +85,7 @@ func (r *groupRepo) GetByID(id int) (*domain.Group, error) {
 	return group, nil
 }
 
-func (r *groupRepo) Update(group *domain.Group) error {
+func (r *repo) Update(group *entities.Group) error {
 	fieldsToUpdate := dbx.Params{
 		"schedule_start":    group.Start,
 		"schedule_interval": group.Interval,
@@ -90,7 +93,7 @@ func (r *groupRepo) Update(group *domain.Group) error {
 	}
 	whereClause := dbx.HashExp{"id": group.ID}
 
-	query := r.db.Update("groups", fieldsToUpdate, whereClause)
+	query := r.store.DB.Update("groups", fieldsToUpdate, whereClause)
 	if _, err := query.Execute(); err != nil {
 		return err
 	}

@@ -19,12 +19,17 @@ func (h *Handler) Register(i *iris.Application) {
 		container.Get("/groups", h.GetGroups)
 		container.Put("/groups/{id:int}", h.UpdateGroup)
 		container.Post("/groups/{id:int}", h.ChangeBid)
+		container.Put("/groups/{id:int}/state", h.ToggleGroup)
+		container.Put("/groups/{id:int}/bids", h.ChangeBid)
 
 		container.Get("/strategies", h.GetStrategies)
 
 		container.OnError(func(c *context.Context, err error) {
-			if err == domain.ErrGroupNotFound {
+			if err == domain.ErrGroupNotFound || err == domain.ErrJobNotFound {
 				c.StatusCode(http.StatusNotFound)
+				c.JSON(map[string]string{"details": err.Error()})
+			} else if err == domain.ErrJobAlreadyScheduled {
+				c.StatusCode(http.StatusBadRequest)
 				c.JSON(map[string]string{"details": err.Error()})
 			} else {
 				c.StatusCode(http.StatusInternalServerError)

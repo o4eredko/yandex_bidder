@@ -1,6 +1,8 @@
 package usecase
 
-import "gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
+import (
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
+)
 
 type (
 	strategyUseCase struct {
@@ -8,7 +10,7 @@ type (
 	}
 
 	StrategyUseCase interface {
-		GetStrategies() ([]*domain.Strategy, error)
+		GetStrategies() ([]*entities.Strategy, error)
 	}
 )
 
@@ -18,6 +20,6 @@ func NewStrategyUseCase(strategyRepo StrategyRepo) StrategyUseCase {
 	}
 }
 
-func (u *strategyUseCase) GetStrategies() ([]*domain.Strategy, error) {
+func (u *strategyUseCase) GetStrategies() ([]*entities.Strategy, error) {
 	return u.strategyRepo.GetAll()
 }

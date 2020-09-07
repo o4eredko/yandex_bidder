@@ -2,33 +2,54 @@ package amqp
 
 import (
 	"github.com/streadway/amqp"
+
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 )
 
 type (
 	Store struct {
-		connection *amqp.Connection
-		Channel    *amqp.Channel
+		connection   *amqp.Connection
+		exchangeName string
 	}
 )
 
-func New(connString string) *Store {
-	connection, err := amqp.Dial(connString)
-	if err != nil {
-		panic(err)
-	}
-	channel, err := connection.Channel()
+func New(config *config.AMQP) *Store {
+	connection, err := amqp.Dial(config.DSN())
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = channel.QueueDeclare("change_bid", false, false, false, false, nil)
-	if err != nil {
-		panic(err)
-	}
 	return &Store{
-		connection: connection,
-		Channel:    channel,
+		connection:   connection,
+		exchangeName: "change_bid",
 	}
+}
+
+func (s *Store) Publish(msg []byte) error {
+	channel, err := s.connection.Channel()
+	if err != nil {
+		return err
+	}
+	if err := channel.ExchangeDeclare(
+		s.exchangeName,
+		"x-delayed-message",
+		false,
+		false,
+		false,
+		false,
+		amqp.Table{
+			"x-delayed-type": amqp.ExchangeTopic,
+		},
+	); err != nil {
+		return err
+	}
+
+	publishing := amqp.Publishing{
+		ContentType: "application/json",
+		Body:        msg,
+	}
+
+	return channel.Publish(s.exchangeName, "bid.update", false, false, publishing)
 }
 
 func (s *Store) Shutdown() error {

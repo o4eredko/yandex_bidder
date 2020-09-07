@@ -4,24 +4,36 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
 )
 
 type (
 	GroupUpdateIn struct {
-		ScheduleStart    *time.Time `json:"start"`
-		ScheduleInterval int        `json:"interval"`
-		StrategyName     string     `json:"strategy"`
+		ID       int
+		Start    *time.Time `json:"start"`
+		Interval int        `json:"interval"`
+		Strategy string     `json:"strategy"`
 	}
 
 	AccountWithCampaigns struct {
-		*Account
-		Campaigns []*Campaign
+		*entities.Account
+		Campaigns []*entities.Campaign
 	}
 
-	BidsOut struct {
-		AccountName string `json:"account_name"`
-		Bids        []*Bid
-		MaxRetries  int `json:"max_retries"`
+	AccountBids struct {
+		AccountName string          `json:"name"`
+		Bids        []*entities.Bid `json:"bids"`
+	}
+
+	GroupToUpdateBids struct {
+		Name       string         `json:"name"`
+		Accounts   []*AccountBids `json:"accounts"`
+		MaxRetries int            `json:"max_retries"`
+	}
+
+	GroupToggleIn struct {
+		Action string `json:"action"`
 	}
 )
 
@@ -29,17 +41,32 @@ func (g *GroupUpdateIn) Validate() error {
 	return validation.ValidateStruct(
 		g,
 		validation.Field(
-			&g.ScheduleStart,
+			&g.ID,
+			validation.Required,
+		),
+		validation.Field(
+			&g.Start,
 			validation.Required,
 			validation.Min(time.Now().UTC()),
 		),
 		validation.Field(
-			&g.ScheduleInterval,
+			&g.Interval,
 			validation.Required,
 		),
 		validation.Field(
-			&g.StrategyName,
+			&g.Strategy,
 			validation.Required,
+		),
+	)
+}
+
+func (g *GroupToggleIn) Validate() error {
+	return validation.ValidateStruct(
+		g,
+		validation.Field(
+			&g.Action,
+			validation.Required,
+			validation.In("start", "pause"),
 		),
 	)
 }
