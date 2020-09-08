@@ -21,12 +21,10 @@ func New(amqpStore *amqpStore.Store) usecase.BidRepo {
 }
 
 func (r *repo) Update(bids *domain.GroupToUpdateBids) error {
-	msg, err := json.MarshalIndent(bids, "", "  ")
+	msg, err := json.Marshal(bids)
 	if err != nil {
 		return err
 	}
-
-	// fmt.Println(string(msg))
 
 	return r.amqpStore.Publish(msg)
 }
