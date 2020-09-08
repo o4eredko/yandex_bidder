@@ -48,6 +48,13 @@ func (r *repo) Add(job *entities.Job) error {
 	return nil
 }
 
+func (r *repo) Update(job *entities.Job) error {
+	if err := r.Remove(job.ID); err != nil {
+		return err
+	}
+	return r.Add(job)
+}
+
 func (r *repo) Scheduled(jobID int) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

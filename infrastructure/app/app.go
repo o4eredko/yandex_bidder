@@ -5,15 +5,16 @@ import (
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/account"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/bid"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/group"
+	groupRepo "gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/group"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/job"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/strategy"
+	strategyRepo "gitlab.jooble.com/marketing_tech/yandex_bidder/adapter/repository/strategy"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/logger"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/amqp"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/scheduler"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/group"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/strategy"
 )
 
 type (
@@ -24,8 +25,8 @@ type (
 	App struct {
 		config          *config.Config
 		cleanupTasks    []shutdowner
-		GroupUseCase    usecase.GroupUseCase
-		StrategyUseCase usecase.StrategyUseCase
+		GroupUseCase    group.UseCase
+		StrategyUseCase strategy.UseCase
 	}
 )
 
@@ -42,18 +43,18 @@ func New(config *config.Config) (*App, error) {
 	schedulerStore := scheduler.New(config.Scheduler)
 	app.AddCleanupTask(schedulerStore)
 
-	groupRepo := group.New(sqlStore)
+	groupRepo := groupRepo.New(sqlStore)
 	accountRepo := account.New(sqlStore)
-	strategyRepo := strategy.New(sqlStore)
+	strategyRepo := strategyRepo.New(sqlStore)
 	bidRepo := bid.New(amqpStore)
 	jobRepo := job.New(schedulerStore.Scheduler)
 
-	app.StrategyUseCase = usecase.NewStrategyUseCase(strategyRepo)
-	app.GroupUseCase = usecase.NewGroupUseCase(groupRepo, accountRepo, bidRepo, jobRepo)
+	app.StrategyUseCase = strategy.New(strategyRepo)
+	app.GroupUseCase = group.New(config.App.ConcurrencyLimit, groupRepo, accountRepo, bidRepo, jobRepo)
 
-	// if err := app.GroupUseCase.ScheduleAll(config.Scheduler.SuppressErrorsOnStartup); err != nil {
-	// 	return nil, err
-	// }
+	if err := app.GroupUseCase.ScheduleAll(config.Scheduler.SuppressErrorsOnStartup); err != nil {
+		return nil, err
+	}
 
 	return app, nil
 }

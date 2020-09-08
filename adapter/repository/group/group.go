@@ -48,9 +48,8 @@ func (r *repo) Accounts(group *entities.Group) ([]*entities.Account, error) {
 func (r *repo) GetAll() ([]*entities.Group, error) {
 	groups := make([]*entities.Group, 0)
 	rows, err := r.store.DB.
-		Select("g.id", "g.name", "schedule_start", "schedule_interval", "s.name as strategy").
-		From("groups AS g").
-		LeftJoin("strategies AS s", dbx.NewExp("g.strategy_id = s.id")).
+		Select("id", "name", "schedule_start", "schedule_interval", "strategy", "should_schedule").
+		From("groups").
 		Rows()
 	if err != nil {
 		return nil, err
@@ -70,10 +69,9 @@ func (r *repo) GetAll() ([]*entities.Group, error) {
 func (r *repo) GetByID(id int) (*entities.Group, error) {
 	group := new(entities.Group)
 	query := r.store.DB.
-		Select("g.id", "g.name", "schedule_start", "schedule_interval", "s.name AS strategy").
-		From("groups AS g").
-		LeftJoin("strategies AS s", dbx.NewExp("g.strategy_id = s.id")).
-		Where(dbx.HashExp{"g.id": id})
+		Select("id", "name", "schedule_start", "schedule_interval", "strategy", "should_schedule").
+		From("groups").
+		Where(dbx.HashExp{"id": id})
 
 	if err := query.One(group); err != nil {
 		if err == sql.ErrNoRows {
@@ -90,6 +88,7 @@ func (r *repo) Update(group *entities.Group) error {
 		"schedule_start":    group.Start,
 		"schedule_interval": group.Interval,
 		"strategy":          group.Strategy,
+		"should_schedule":   group.ShouldSchedule,
 	}
 	whereClause := dbx.HashExp{"id": group.ID}
 

@@ -66,7 +66,7 @@ func (g *GroupToggleIn) Validate() error {
 		validation.Field(
 			&g.Action,
 			validation.Required,
-			validation.In("start", "pause"),
+			validation.In("start", "terminate"),
 		),
 	)
 }

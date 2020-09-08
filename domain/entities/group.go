@@ -8,12 +8,13 @@ import (
 
 type (
 	Group struct {
-		ID          int        `json:"id"`
-		Name        string     `json:"name"`
-		Strategy    *string    `json:"strategy"`
-		Start       *time.Time `json:"start" db:"schedule_start"`
-		Interval    *int       `json:"interval" db:"schedule_interval"`
-		IsScheduled bool       `json:"is_scheduled"`
+		ID             int        `json:"id"`
+		Name           string     `json:"name"`
+		Strategy       *string    `json:"strategy"`
+		Start          *time.Time `json:"start" db:"schedule_start"`
+		Interval       *int       `json:"interval" db:"schedule_interval"`
+		IsScheduled    bool       `json:"scheduled"`
+		ShouldSchedule bool       `json:"-" db:"should_schedule"`
 	}
 )
 

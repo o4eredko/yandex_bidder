@@ -18,7 +18,7 @@ type (
 	}
 
 	StrategyRepo interface {
-		GetAll() ([]*entities.Strategy, error)
+		GetAll() ([]entities.Strategy, error)
 	}
 
 	BidRepo interface {
@@ -27,6 +27,7 @@ type (
 
 	JobRepo interface {
 		Add(job *entities.Job) error
+		Update(job *entities.Job) error
 		Remove(jobID int) error
 		Scheduled(jobID int) bool
 	}

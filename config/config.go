@@ -8,23 +8,21 @@ import (
 
 type (
 	Config struct {
+		App       *App
 		Scheduler *Scheduler
-		Api       *Api
 		Database  *Database
 		AMQP      *AMQP
+		Api       *Api
 		Logger    *Logger
 	}
 
-	Interval struct {
-		Type string
-		Min  int
-		Max  int
+	App struct {
+		ConcurrencyLimit int `config:"concurrency_limit"`
 	}
 
 	Scheduler struct {
 		TimeZone                string `config:"time_zone"`
 		SuppressErrorsOnStartup bool   `config:"suppress_errors_on_startup"`
-		Interval                *Interval
 	}
 
 	Api struct {
