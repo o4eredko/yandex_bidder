@@ -2,6 +2,7 @@ package account
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 
@@ -41,6 +42,7 @@ func (r *repo) Bids(account *entities.Account, strategy string) ([]*entities.Bid
 		}
 		if bid.Bid != nil {
 			bids = append(bids, bid)
+			log.Info().Msgf("account=%v, campaign_id=%v, bid=%v", account.Name, bid.CampaignID, bid.Bid)
 		}
 	}
 

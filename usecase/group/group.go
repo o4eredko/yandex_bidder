@@ -97,6 +97,9 @@ func (u *useCase) FixBids(groupID int) error {
 	} else {
 		accountsWithBids, err = u.calculateWithWorkers(numOfWorkers, accounts, *group.Strategy)
 	}
+	if err != nil {
+		return err
+	}
 	groupToUpdate := &domain.GroupToUpdateBids{
 		Name:       group.Name,
 		Accounts:   accountsWithBids,
