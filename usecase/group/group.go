@@ -1,7 +1,9 @@
 package group
 
 import (
+	"github.com/rs/zerolog/log"
 	"math"
+	"time"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
@@ -78,6 +80,8 @@ func (u *useCase) Update(updateIn *domain.GroupUpdateIn) (*entities.Group, error
 }
 
 func (u *useCase) FixBids(groupID int) error {
+	now := time.Now().UTC()
+	log.Info().Msgf("start FixBids for groupID=%d at %v", groupID, now)
 	group, err := u.groupRepo.GetByID(groupID)
 	if err != nil {
 		return err
