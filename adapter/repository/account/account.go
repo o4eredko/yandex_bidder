@@ -39,7 +39,9 @@ func (r *repo) Bids(account *entities.Account, strategy string) ([]*entities.Bid
 		if err := rows.ScanStruct(bid); err != nil {
 			return nil, err
 		}
-		bids = append(bids, bid)
+		if bid.Bid != nil {
+			bids = append(bids, bid)
+		}
 	}
 
 	return bids, nil
