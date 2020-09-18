@@ -1,6 +1,8 @@
 package group
 
 import (
+	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"sync"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
@@ -33,18 +35,19 @@ func (u *useCase) bidsWorker(
 	accounts <-chan *entities.Account,
 	res chan<- interface{},
 ) {
+	id := uuid.New()
+	log.Info().Msgf("[%v] start consuming", id.String())
 	defer wg.Done()
 	for account := range accounts {
-		bids, err := u.accountRepo.Bids(account, strategy)
-		if err != nil {
+		log.Info().Msgf("[%v] working on %v ...", id.String(), account.Name)
+		if bids, err := u.accountRepo.Bids(account, strategy); err != nil {
 			res <- err
-			continue
+		} else {
+			res <- &domain.AccountBids{AccountName: account.Name, Bids: bids}
 		}
-		res <- &domain.AccountBids{
-			AccountName: account.Name,
-			Bids:        bids,
-		}
+		log.Info().Msgf("[%v] %v done", id.String(), account.Name)
 	}
+	log.Info().Msgf("[%v] my work is done", id.String())
 }
 
 func (u *useCase) calculateWithWorkers(
