@@ -26,7 +26,7 @@ func (r *repo) Update(bids *domain.GroupToUpdateBids) error {
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("bids for update: %v", bids)
+	log.Info().Msgf("bids for update: %v", string(msg))
 
 	return r.amqpStore.Publish(msg)
 }
