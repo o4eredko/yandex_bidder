@@ -30,5 +30,6 @@ type (
 		Update(job *entities.Job) error
 		Remove(jobID int) error
 		Scheduled(jobID int) bool
+		SchedulerInfo() *domain.SchedulerOut
 	}
 )

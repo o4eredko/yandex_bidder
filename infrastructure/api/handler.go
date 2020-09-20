@@ -6,21 +6,25 @@ import (
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/group"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/scheduler"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/strategy"
 )
 
 type Handler struct {
-	groupUseCase    group.UseCase
-	strategyUseCase strategy.UseCase
+	groupUseCase     group.UseCase
+	strategyUseCase  strategy.UseCase
+	schedulerUseCase scheduler.UseCase
 }
 
 func NewHandler(
 	groupUseCase group.UseCase,
 	strategyUseCase strategy.UseCase,
+	schedulerUseCase scheduler.UseCase,
 ) *Handler {
 	return &Handler{
-		groupUseCase:    groupUseCase,
-		strategyUseCase: strategyUseCase,
+		groupUseCase:     groupUseCase,
+		strategyUseCase:  strategyUseCase,
+		schedulerUseCase: schedulerUseCase,
 	}
 }
 
@@ -59,4 +63,8 @@ func (h *Handler) ToggleGroup(c iris.Context, id int, input *domain.GroupToggleI
 		c.JSON(iris.Map{"updated": true})
 	}
 	return
+}
+
+func (h *Handler) SchedulerInfo() *domain.SchedulerOut {
+	return h.schedulerUseCase.ShowInfo()
 }

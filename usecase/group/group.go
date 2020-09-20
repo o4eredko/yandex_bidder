@@ -1,9 +1,10 @@
 package group
 
 import (
-	"github.com/rs/zerolog/log"
 	"math"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
@@ -23,9 +24,7 @@ type (
 		GetAll() ([]*entities.Group, error)
 		Update(updateIn *domain.GroupUpdateIn) (*entities.Group, error)
 		FixBids(groupID int) error
-		Schedule(group *entities.Group) error
 		ScheduleAll(stopOnErr bool) error
-		Unschedule(group *entities.Group) error
 		Start(groupID int) error
 		Terminate(groupID int) error
 	}
@@ -66,22 +65,21 @@ func (u *useCase) Update(updateIn *domain.GroupUpdateIn) (*entities.Group, error
 	group.Start = updateIn.Start
 	group.Interval = &updateIn.Interval
 	group.Strategy = &updateIn.Strategy
-	if err := u.groupRepo.Update(group); err != nil {
-		return nil, err
-	}
 	if u.jobRepo.Scheduled(group.ID) {
-		task := entities.NewTask(u.FixBids, group.ID)
-		job := entities.NewJob(group.ID, group.Start, *group.Interval, task)
+		job := u.newJob(group)
 		if err := u.jobRepo.Update(job); err != nil {
 			return nil, err
 		}
+		group.IsScheduled = true
+		group.ShouldSchedule = true
+	}
+	if err := u.groupRepo.Update(group); err != nil {
+		return nil, err
 	}
 	return group, nil
 }
 
 func (u *useCase) FixBids(groupID int) error {
-	now := time.Now().UTC()
-	log.Info().Msgf("start FixBids for groupID=%d at %v", groupID, now)
 	group, err := u.groupRepo.GetByID(groupID)
 	if err != nil {
 		return err
@@ -100,28 +98,16 @@ func (u *useCase) FixBids(groupID int) error {
 	if err != nil {
 		return err
 	}
+	if len(accountsWithBids) == 0 {
+		log.Info().Msgf("[%d] bids for update not found, skipping", group.ID)
+		return nil
+	}
 	groupToUpdate := &domain.GroupToUpdateBids{
 		Name:       group.Name,
 		Accounts:   accountsWithBids,
 		MaxRetries: group.MaxRetries(),
 	}
 	return u.bidRepo.Update(groupToUpdate)
-}
-
-func (u *useCase) Schedule(group *entities.Group) error {
-	if scheduled := u.jobRepo.Scheduled(group.ID); scheduled {
-		return domain.ErrJobAlreadyScheduled
-	}
-	if err := group.ValidateSchedule(); err != nil {
-		return err
-	}
-	task := entities.NewTask(u.FixBids, group.ID)
-	job := entities.NewJob(group.ID, group.Start, *group.Interval, task)
-	group.ShouldSchedule = true
-	if err := u.groupRepo.Update(group); err != nil {
-		return err
-	}
-	return u.jobRepo.Add(job)
 }
 
 func (u *useCase) ScheduleAll(suppressErr bool) error {
@@ -131,7 +117,7 @@ func (u *useCase) ScheduleAll(suppressErr bool) error {
 	}
 	for _, group := range groups {
 		if group.ShouldSchedule {
-			err := u.Schedule(group)
+			err := u.schedule(group)
 			if err != nil && !suppressErr {
 				return err
 			}
@@ -140,9 +126,23 @@ func (u *useCase) ScheduleAll(suppressErr bool) error {
 	return nil
 }
 
-func (u *useCase) Unschedule(group *entities.Group) error {
-	if scheduled := u.jobRepo.Scheduled(group.ID); !scheduled {
-		return domain.ErrJobNotFound
+func (u *useCase) Start(groupID int) error {
+	group, err := u.groupRepo.GetByID(groupID)
+	if err != nil {
+		return err
+	}
+	if err := u.schedule(group); err != nil {
+		return err
+	}
+	group.IsScheduled = true
+	group.ShouldSchedule = true
+	return u.groupRepo.Update(group)
+}
+
+func (u *useCase) Terminate(groupID int) error {
+	group, err := u.groupRepo.GetByID(groupID)
+	if err != nil {
+		return err
 	}
 	if err := u.jobRepo.Remove(group.ID); err != nil {
 		return err
@@ -151,18 +151,28 @@ func (u *useCase) Unschedule(group *entities.Group) error {
 	return u.groupRepo.Update(group)
 }
 
-func (u *useCase) Start(groupID int) error {
-	group, err := u.groupRepo.GetByID(groupID)
-	if err != nil {
+func (u *useCase) schedule(group *entities.Group) error {
+	if err := group.ValidateSchedule(); err != nil {
 		return err
 	}
-	return u.Schedule(group)
+	if u.jobRepo.Scheduled(group.ID) {
+		return domain.ErrJobAlreadyScheduled
+	}
+	job := u.newJob(group)
+	return u.jobRepo.Add(job)
 }
 
-func (u *useCase) Terminate(groupID int) error {
-	group, err := u.groupRepo.GetByID(groupID)
-	if err != nil {
-		return err
+func (u *useCase) newJob(group *entities.Group) *entities.Job {
+	f := func() {
+		start := time.Now().UTC()
+		log.Info().Msgf("[%d] invoked at: %v", group.ID, start)
+		if err := u.FixBids(group.ID); err != nil {
+			log.Error().Msgf("[%d] failed: %v", group.ID, err)
+		} else {
+			log.Info().Msgf("[%d] took: %v", group.ID, time.Since(start))
+		}
 	}
-	return u.Unschedule(group)
+	return entities.
+		NewJob(group.ID, group.Start, *group.Interval).
+		WithFunc(f)
 }

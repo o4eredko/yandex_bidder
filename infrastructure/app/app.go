@@ -11,9 +11,10 @@ import (
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/logger"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/amqp"
-	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/scheduler"
+	schedulerStore "gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/scheduler"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/sql"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/group"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/scheduler"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/usecase/strategy"
 )
 
@@ -23,10 +24,11 @@ type (
 	}
 
 	App struct {
-		config          *config.Config
-		cleanupTasks    []shutdowner
-		GroupUseCase    group.UseCase
-		StrategyUseCase strategy.UseCase
+		config           *config.Config
+		cleanupTasks     []shutdowner
+		GroupUseCase     group.UseCase
+		StrategyUseCase  strategy.UseCase
+		SchedulerUseCase scheduler.UseCase
 	}
 )
 
@@ -40,17 +42,18 @@ func New(config *config.Config) (*App, error) {
 	app.AddCleanupTask(sqlStore)
 	amqpStore := amqp.New(config.AMQP)
 	app.AddCleanupTask(amqpStore)
-	schedulerStore := scheduler.New(config.Scheduler)
+	schedulerStore := schedulerStore.New(config.Scheduler)
 	app.AddCleanupTask(schedulerStore)
 
 	groupRepo := groupRepo.New(sqlStore)
 	accountRepo := account.New(sqlStore)
 	strategyRepo := strategyRepo.New(sqlStore)
 	bidRepo := bid.New(amqpStore)
-	jobRepo := job.New(schedulerStore.Scheduler)
+	jobRepo := job.New(schedulerStore.Cron)
 
 	app.StrategyUseCase = strategy.New(strategyRepo)
 	app.GroupUseCase = group.New(config.App.ConcurrencyLimit, groupRepo, accountRepo, bidRepo, jobRepo)
+	app.SchedulerUseCase = scheduler.New(jobRepo)
 
 	if err := app.GroupUseCase.ScheduleAll(config.Scheduler.SuppressErrorsOnStartup); err != nil {
 		return nil, err

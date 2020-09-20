@@ -2,7 +2,6 @@ package bid
 
 import (
 	"encoding/json"
-	"github.com/rs/zerolog/log"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	amqpStore "gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/store/amqp"
@@ -26,7 +25,5 @@ func (r *repo) Update(bids *domain.GroupToUpdateBids) error {
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("bids for update: %v", string(msg))
-
 	return r.amqpStore.Publish(msg)
 }

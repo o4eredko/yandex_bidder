@@ -35,6 +35,8 @@ func (h *Handler) Register(i *iris.Application) {
 
 		container.Get("/strategies", h.GetAll)
 
+		container.Get("/scheduler", h.SchedulerInfo)
+
 		container.OnError(func(c *context.Context, err error) {
 			if err == domain.ErrGroupNotFound || err == domain.ErrJobNotFound {
 				c.StatusCode(http.StatusNotFound)

@@ -35,6 +35,24 @@ type (
 	GroupToggleIn struct {
 		Action string `json:"action"`
 	}
+
+	SchedulerOut struct {
+		Count   int              `json:"count"`
+		Running []*RunningJobOut `json:"running"`
+		Pending []*PendingJobOut `json:"pending"`
+	}
+
+	RunningJobOut struct {
+		ID       int       `json:"id"`
+		NextRun  time.Time `json:"next_run"`
+		PrevRun  time.Time `json:"prev_run"`
+		Interval string    `json:"interval"`
+	}
+
+	PendingJobOut struct {
+		ID         int       `json:"id"`
+		ScheduleAt time.Time `json:"schedule_at"`
+	}
 )
 
 func (g *GroupUpdateIn) Validate() error {

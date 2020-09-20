@@ -3,14 +3,15 @@ package scheduler
 import (
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/robfig/cron/v3"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
 )
 
 type (
 	store struct {
-		Scheduler *gocron.Scheduler
+		Cron *cron.Cron
+		Jobs map[int]cron.EntryID
 	}
 )
 
@@ -19,17 +20,14 @@ func New(config *config.Scheduler) *store {
 	if err != nil {
 		panic(err)
 	}
-	scheduler := gocron.NewScheduler(loc)
-	scheduler.StartAsync()
-
+	c := cron.New(cron.WithLocation(loc))
+	c.Start()
 	return &store{
-		Scheduler: scheduler,
+		Cron: c,
 	}
 }
 
 func (s *store) Shutdown() error {
-	s.Scheduler.Clear()
-	s.Scheduler.Stop()
-
+	s.Cron.Stop()
 	return nil
 }
