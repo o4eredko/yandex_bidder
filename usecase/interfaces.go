@@ -22,7 +22,7 @@ type (
 	}
 
 	BidRepo interface {
-		Update(bids *domain.GroupToUpdateBids) error
+		Update(bid *entities.Bid) error
 	}
 
 	JobRepo interface {
@@ -31,5 +31,9 @@ type (
 		Remove(jobID int) error
 		Scheduled(jobID int) bool
 		SchedulerInfo() *domain.SchedulerOut
+	}
+
+	AMQPRepo interface {
+		Update(bids *domain.GroupToUpdateBids) error
 	}
 )

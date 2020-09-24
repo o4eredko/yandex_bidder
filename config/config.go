@@ -39,10 +39,50 @@ type (
 	}
 
 	AMQP struct {
-		Host     string
-		Port     int
-		Username string
-		Password string
+		Host      string
+		Port      int
+		Username  string
+		Password  string
+		Consumes  map[string]*ConsumeConfig
+		Publishes map[string]*PublishConfig
+	}
+
+	ConsumeConfig struct {
+		Name      string
+		AutoAck   bool `config:"auto_ack"`
+		Exclusive bool
+		NoLocal   bool `config:"no_local"`
+		NoWait    bool `config:"no_wait"`
+		Args      map[string]interface{}
+		Exchange  exchangeConfig
+	}
+
+	PublishConfig struct {
+		Mandatory bool
+		Immediate bool
+		Exchange  exchangeConfig
+	}
+
+	exchangeConfig struct {
+		Name       string
+		Type       string
+		Durable    bool
+		AutoDelete bool `config:"auto_delete"`
+		Internal   bool
+		NoWait     bool   `config:"no_wait"`
+		RoutingKey string `config:"routing_key"`
+		Args       map[string]interface{}
+		Queue      queueConfig
+	}
+
+	queueConfig struct {
+		Name       string
+		Durable    bool
+		AutoDelete bool `config:"auto_delete"`
+		Exclusive  bool
+		Internal   bool
+		NoWait     bool `config:"no_wait"`
+		Args       map[string]interface{}
 	}
 
 	Logger struct {

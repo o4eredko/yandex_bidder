@@ -22,6 +22,20 @@ amqp:
   port: "${AMQP_PORT|5672}"
   username: "${AMQP_USERNAME}"
   password: "${AMQP_PASSWORD}"
+  publishes:
+    change_bid:
+      exchange:
+        name: "change_bid"
+        type: "x-delayed-message"
+        routing_key: "bid.update"
+        args:
+          x-delayed-type: "topic"
+  consumes:
+    updated:
+      auto_ack: true
+      exchange:
+        name: "updated"
+        type: "fanout"
 
 logger:
   level: "debug"

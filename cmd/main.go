@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/config"
+	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/amqp"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/api"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/infrastructure/app"
 )
@@ -18,6 +19,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	amqpConsumer := amqp.New(app, c)
+	go amqpConsumer.Start()
 
 	api := api.New(c, app)
 	// Start server

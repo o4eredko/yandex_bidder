@@ -16,7 +16,7 @@ type (
 		concurrencyLimit int
 		groupRepo        usecase.GroupRepo
 		accountRepo      usecase.AccountRepo
-		bidRepo          usecase.BidRepo
+		amqpRepo         usecase.AMQPRepo
 		jobRepo          usecase.JobRepo
 	}
 
@@ -34,14 +34,14 @@ func New(
 	concurrencyLimit int,
 	groupRepo usecase.GroupRepo,
 	accountRepo usecase.AccountRepo,
-	bidRepo usecase.BidRepo,
+	amqpRepo usecase.AMQPRepo,
 	jobRepo usecase.JobRepo,
 ) UseCase {
 	return &useCase{
 		concurrencyLimit: concurrencyLimit,
 		groupRepo:        groupRepo,
 		accountRepo:      accountRepo,
-		bidRepo:          bidRepo,
+		amqpRepo:         amqpRepo,
 		jobRepo:          jobRepo,
 	}
 }
@@ -107,7 +107,7 @@ func (u *useCase) FixBids(groupID int) error {
 		Accounts:   accountsWithBids,
 		MaxRetries: group.MaxRetries(),
 	}
-	return u.bidRepo.Update(groupToUpdate)
+	return u.amqpRepo.Update(groupToUpdate)
 }
 
 func (u *useCase) ScheduleAll(suppressErr bool) error {
