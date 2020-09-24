@@ -47,7 +47,7 @@ func (r *repo) Bids(account *entities.Account, strategy string) ([]*entities.Bid
 		}
 		log.Info().Msgf(
 			"account=%s, campaign_id=%d, old_bid=%d, new_bid=%d",
-			account.Name, bid.CampaignID, bid.OldBid, bid.Bid,
+			account.Name, bid.CampaignID, *bid.OldBid, *bid.Bid,
 		)
 		bids = append(bids, bid)
 	}
