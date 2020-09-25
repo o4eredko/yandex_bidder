@@ -39,12 +39,10 @@ func (h *handler) UpdateBid(message amqp.Delivery) {
 		log.Error().Msgf("Cannot map message: %s to json", message.Body)
 		return
 	}
-	log.Info().Msgf("received bid: %v", bid)
 
 	err := h.bidUseCase.Update(bid)
 	if err != nil {
 		log.Error().Msgf("Cannot update bid for campaign: %s, error: %v", bid.CampaignID, err)
 		return
 	}
-	log.Info().Msgf("Updated bid: %v", bid)
 }
