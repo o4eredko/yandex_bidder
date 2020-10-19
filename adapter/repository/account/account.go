@@ -45,10 +45,19 @@ func (r *repo) Bids(account *entities.Account, strategy string) ([]*entities.Bid
 			log.Warn().Msgf("bid for campaign_id=%v not found", bid.CampaignID)
 			continue
 		}
-		log.Info().Msgf(
-			"account=%s, campaign_id=%d, old_bid=%d, new_bid=%d",
-			account.Name, bid.CampaignID, *bid.OldBid, *bid.Bid,
-		)
+
+		if bid.OldBid == nil {
+			log.Info().Msgf(
+				"account=%s, campaign_id=%d, old_bid=nil, new_bid=%v",
+				account.Name, bid.CampaignID, bid.Bid,
+			)
+		} else {
+			log.Info().Msgf(
+				"account=%s, campaign_id=%d, old_bid=%v, new_bid=%v",
+				account.Name, bid.CampaignID, bid.OldBid, bid.Bid,
+			)
+		}
+
 		bids = append(bids, bid)
 	}
 
