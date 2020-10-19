@@ -3,6 +3,8 @@ package group
 import (
 	"sync"
 
+	"github.com/rs/zerolog/log"
+
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain"
 	"gitlab.jooble.com/marketing_tech/yandex_bidder/domain/entities"
 )
@@ -34,11 +36,12 @@ func (u *useCase) bidsWorker(
 ) {
 	defer wg.Done()
 	for account := range accounts {
-		if bids, err := u.accountRepo.Bids(account, strategy); err != nil {
+		log.Info().Msgf("calculating bids for account [%v] with strategy [%v]", *account, strategy)
+		bids, err := u.accountRepo.Bids(account, strategy)
+		if err != nil {
 			res <- err
 		} else if len(bids) > 0 {
 			res <- &domain.AccountBids{AccountName: account.Name, Bids: bids}
-
 		}
 	}
 }
