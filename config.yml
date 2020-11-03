@@ -36,6 +36,10 @@ amqp:
       exchange:
         name: "updated"
         type: "fanout"
+        queue:
+          name: "updated"
+          exclusive: true
+          auto_delete: true
 
 logger:
   level: "debug"
